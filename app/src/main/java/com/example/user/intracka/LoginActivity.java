@@ -1,8 +1,12 @@
 package com.example.user.intracka;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,13 +20,18 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class LoginActivity extends AppCompatActivity {
 
     EditText siteid,username,password;
     Button loginbtn;
+    DatabaseHandler db;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +41,8 @@ public class LoginActivity extends AppCompatActivity {
         siteid = (EditText)findViewById(R.id.siteid);
         username = (EditText)findViewById(R.id.username);
         password = (EditText)findViewById(R.id.password);
+        db = new DatabaseHandler(this);
+
 
         loginbtn = (Button)findViewById(R.id.loginbtn);
 
@@ -43,52 +54,109 @@ public class LoginActivity extends AppCompatActivity {
                 final String usernameV = username.getText().toString();
                 final String passwordV = password.getText().toString();
 
+
                 if(siteidV.equals("")|| usernameV.equals("")|| passwordV.equals("")){
                     Toast.makeText(getApplicationContext(),"Please fill inn all required details",Toast.LENGTH_LONG).show();
                 }
                 else{
+                    int method =2;
 
-                    StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://10.0.2.2/intrack/login.php",
-                            new Response.Listener<String>() {
-                                @Override
-                                public void onResponse(String response) {
+                    if(isNetworkAvailable())
+                       method=1;
+                    else
+                        method =2;
 
-                                    String arr[] = response.split(",");
+                    if(method==1) {
+//                        StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://10.0.2.2/intrack/login.php",
 
-                                    if(arr[0].equalsIgnoreCase("password correct"))
-                                    {
-                                        Toast.makeText(LoginActivity.this, arr[0], Toast.LENGTH_LONG).show();
-                                        Intent intent = new Intent(getBaseContext(),LoggedInActivity.class);
-                                        intent.putExtra("username",arr[1]);
-                                        startActivity(intent);
+                                StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://192.168.1.79/intrack/login.php",
+                                new Response.Listener<String>() {
+                                    @Override
+                                    public void onResponse(String response) {
+
+                                        String arr[] = response.split(",");
+
+                                        if (arr[0].equalsIgnoreCase("password correct")) {
+                                           // Toast.makeText(LoginActivity.this, arr[0], Toast.LENGTH_LONG).show();
+                                            Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
+                                            intent.putExtra("username", arr[1]);
+                                            startActivity(intent);
 
 
-                                    }else{
-                                        Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
+                                        } else {
+                                            Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
+                                        }
                                     }
-                                }
-                            },
-                            new Response.ErrorListener() {
-                                @Override
-                                public void onErrorResponse(VolleyError error) {
-                                    Toast.makeText(LoginActivity.this,error.toString(),Toast.LENGTH_LONG).show();
-                                }
-                            }){
-                        @Override
-                        protected Map<String, String> getParams() throws AuthFailureError {
-                            Map<String,String> params = new HashMap<String, String>();
-                           // params.put("site_id",siteidV);
-                            params.put("username",usernameV);
-                            params.put("password",passwordV);
-                            return params;
-                        }
-                    };
+                                },
+                                new Response.ErrorListener() {
+                                    @Override
+                                    public void onErrorResponse(VolleyError error) {
+                                        Toast.makeText(LoginActivity.this, error.toString(), Toast.LENGTH_LONG).show();
+                                    }
+                                }) {
+                            @Override
+                            protected Map<String, String> getParams() throws AuthFailureError {
+                                Map<String, String> params = new HashMap<String, String>();
+                                // params.put("site_id",siteidV);
+                                params.put("username", usernameV);
+                                params.put("password", passwordV);
+                                return params;
+                            }
+                        };
 
-                    RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-                    requestQueue.add(stringRequest);
+                        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+                        requestQueue.add(stringRequest);
+                    }
+                    else if(method==2){
+                        if(db.getUser(usernameV)!=null){
+                            User u = db.getUser(usernameV);
+
+                            String pw = u.getPassword();
+                            MCrypt mcrypt = new MCrypt();
+                            String dpw="";
+
+                            try{
+                                dpw = new String(mcrypt.decrypt(pw));
+
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
+
+                            dpw = dpw.replaceAll("[^A-Za-z0-9]","");
+                            dpw = dpw.replaceAll("\\s","");
+
+                            Log.d("password",dpw);
+                            Log.d("password",String.valueOf(dpw.length()) +"  "+ passwordV);
+
+                            if(dpw.equalsIgnoreCase(passwordV) ){
+                                Toast.makeText(getApplicationContext(),"Password correct",Toast.LENGTH_LONG).show();
+
+                                Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
+                                intent.putExtra("username", u.getUsername());
+                                startActivity(intent);
+                            }
+                            else
+                            {
+                                Toast.makeText(getApplicationContext(),"Password wrong",Toast.LENGTH_LONG).show();
+                            }
+
+
+                        }
+                        else{
+                            Toast.makeText(getApplicationContext(),"No such username",Toast.LENGTH_LONG).show();
+                        }
+                    }
+
                 }
 
             }
         });
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }
