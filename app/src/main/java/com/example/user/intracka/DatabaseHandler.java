@@ -42,6 +42,8 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS" + TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS user_access_hist");
+
         onCreate(db);
     }
 
@@ -100,6 +102,26 @@ public class DatabaseHandler extends SQLiteOpenHelper{
             return user;
         }
         return null;
+    }
+
+    public int getHistoryCount(){
+        String countQuery = "SELECT  * FROM user_access_hist" ;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        int cnt = cursor.getCount();
+        cursor.close();
+        return cnt;
+    }
+
+    public int getUserCount(){
+        String countQuery = "SELECT  * FROM user_mast" ;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(countQuery, null);
+        int cnt = cursor.getCount();
+        cursor.close();
+        return cnt;
     }
 
 //    public List<User> getAllUser(){

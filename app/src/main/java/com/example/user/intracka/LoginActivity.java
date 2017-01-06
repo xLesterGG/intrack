@@ -6,6 +6,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +23,11 @@ import com.android.volley.toolbox.Volley;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -44,11 +50,21 @@ public class LoginActivity extends AppCompatActivity {
         db = new DatabaseHandler(this);
 
 
+//        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+//        Date dateobj = new Date();
+//
+//        DateFormat t = new SimpleDateFormat("HH:mm:ss");
+//
+//        System.out.println(df.format(dateobj)+ "aaa") ;
+//        System.out.println(t.format(dateobj)+ "bbb") ;
+
+
         loginbtn = (Button)findViewById(R.id.loginbtn);
 
         loginbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                foo(getApplicationContext());
 
                 final String siteidV = siteid.getText().toString();
                 final String usernameV = username.getText().toString();
@@ -59,41 +75,46 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),"Please fill inn all required details",Toast.LENGTH_LONG).show();
                 }
                 else{
-                    int method =2;
+                    int method =0;
 
                     if(isNetworkAvailable())
                        method=1;
                     else
                         method =2;
 
+                    Log.d("method",String.valueOf(method));
+
                     if(method==1) {
 //                        StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://10.0.2.2/intrack/login.php",
 
                                 StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://192.168.1.79/intrack/login.php",
-                                new Response.Listener<String>() {
-                                    @Override
-                                    public void onResponse(String response) {
+                                        new Response.Listener<String>() {
+                                            @Override
+                                            public void onResponse(String response) {
 
-                                        String arr[] = response.split(",");
+                                                String arr[] = response.split(",");
 
-                                        if (arr[0].equalsIgnoreCase("password correct")) {
-                                           // Toast.makeText(LoginActivity.this, arr[0], Toast.LENGTH_LONG).show();
-                                            Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
-                                            intent.putExtra("username", arr[1]);
-                                            startActivity(intent);
+                                                if (arr[0].equalsIgnoreCase("password correct")) {
+                                                    // Toast.makeText(LoginActivity.this, arr[0], Toast.LENGTH_LONG).show();
+                                                    Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
+                                                    intent.putExtra("username", arr[1]);
+                                                    intent.putExtra("access","online");
+                                                    startActivity(intent);
 
 
-                                        } else {
-                                            Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                },
-                                new Response.ErrorListener() {
-                                    @Override
-                                    public void onErrorResponse(VolleyError error) {
-                                        Toast.makeText(LoginActivity.this, error.toString(), Toast.LENGTH_LONG).show();
-                                    }
-                                }) {
+                                                } else {
+//                                                    Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
+                                                    Toast.makeText(LoginActivity.this, "Please check your connection and try again", Toast.LENGTH_LONG).show();
+
+                                                }
+                                            }
+                                        },
+                                        new Response.ErrorListener() {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error) {
+                                                Toast.makeText(LoginActivity.this, error.toString(), Toast.LENGTH_LONG).show();
+                                            }
+                                        }) {
                             @Override
                             protected Map<String, String> getParams() throws AuthFailureError {
                                 Map<String, String> params = new HashMap<String, String>();
@@ -115,6 +136,8 @@ public class LoginActivity extends AppCompatActivity {
                             MCrypt mcrypt = new MCrypt();
                             String dpw="";
 
+                            //Log.d("count",String.valueOf(db.getHistoryCount()));
+
                             try{
                                 dpw = new String(mcrypt.decrypt(pw));
 
@@ -133,6 +156,7 @@ public class LoginActivity extends AppCompatActivity {
 
                                 Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
                                 intent.putExtra("username", u.getUsername());
+                                intent.putExtra("access","offline");
                                 startActivity(intent);
                             }
                             else
@@ -159,4 +183,19 @@ public class LoginActivity extends AppCompatActivity {
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
+
+    public void foo(Context context) {
+        // when you need location
+        // if inside activity context = this;
+        Log.d("aaaaaa","aaa");
+
+        SingleShotLocationProvider.requestSingleUpdate(context,
+                new SingleShotLocationProvider.LocationCallback() {
+                    @Override public void onNewLocationAvailable(SingleShotLocationProvider.GPSCoordinates location) {
+                        Log.d("Location", "my location is " + location.toString());
+                    }
+                });
+    }
 }
+
+
