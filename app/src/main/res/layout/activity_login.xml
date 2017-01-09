@@ -38,6 +38,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/siteid"
             android:layout_marginLeft="50dp"
+            android:text="aaa"
             />
 
     </LinearLayout>
@@ -52,14 +53,15 @@
             android:text="Username"
             android:textSize="20dp"
             android:textStyle="bold"
-            android:layout_marginLeft="30dp"/>
+            android:layout_marginLeft="30dp"
+            />
 
         <EditText
             android:layout_width="160dp"
             android:layout_height="wrap_content"
             android:id="@+id/username"
             android:layout_marginLeft="19dp"
-            />
+            android:text="aaa"/>
 
     </LinearLayout>
 
@@ -81,6 +83,7 @@
             android:id="@+id/password"
             android:layout_marginLeft="20dp"
             android:inputType="textPassword"
+            android:text="aaa"
             />
 
     </LinearLayout>

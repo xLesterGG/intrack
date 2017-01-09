@@ -21,7 +21,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
-import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Time;
 import java.text.DateFormat;
@@ -32,12 +31,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import im.delight.android.location.SimpleLocation;
+
 public class LoginActivity extends AppCompatActivity {
 
     EditText siteid,username,password;
     Button loginbtn;
     DatabaseHandler db;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +64,6 @@ public class LoginActivity extends AppCompatActivity {
         loginbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                foo(getApplicationContext());
 
                 final String siteidV = siteid.getText().toString();
                 final String usernameV = username.getText().toString();
@@ -103,8 +102,7 @@ public class LoginActivity extends AppCompatActivity {
 
 
                                                 } else {
-//                                                    Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
-                                                    Toast.makeText(LoginActivity.this, "Please check your connection and try again", Toast.LENGTH_LONG).show();
+                                                    Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
 
                                                 }
                                             }
@@ -112,7 +110,9 @@ public class LoginActivity extends AppCompatActivity {
                                         new Response.ErrorListener() {
                                             @Override
                                             public void onErrorResponse(VolleyError error) {
-                                                Toast.makeText(LoginActivity.this, error.toString(), Toast.LENGTH_LONG).show();
+//                                                Toast.makeText(LoginActivity.this, error.toString(), Toast.LENGTH_LONG).show();
+                                                Toast.makeText(LoginActivity.this, "Please check your connection" + error.toString(), Toast.LENGTH_LONG).show();
+
                                             }
                                         }) {
                             @Override
@@ -184,18 +184,16 @@ public class LoginActivity extends AppCompatActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    public void foo(Context context) {
-        // when you need location
-        // if inside activity context = this;
-        Log.d("aaaaaa","aaa");
 
-        SingleShotLocationProvider.requestSingleUpdate(context,
-                new SingleShotLocationProvider.LocationCallback() {
-                    @Override public void onNewLocationAvailable(SingleShotLocationProvider.GPSCoordinates location) {
-                        Log.d("Location", "my location is " + location.toString());
-                    }
-                });
-    }
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//
+//        // make the device update its location
+//        location.beginUpdates();
+//
+//        // ...
+//    }
 }
 
 

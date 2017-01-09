@@ -7,6 +7,8 @@ package com.example.user.intracka;
 public class AccessHistory {
     String usr_id,login_date,login_time,login_loc,logout_date,logout_time,logout_loc,device_imei_num1,duration;
 
+    public AccessHistory(){};
+
     public AccessHistory(String usr_id, String login_date, String login_time, String login_loc, String device_imei_num) {
         this.usr_id = usr_id;
         this.login_date = login_date;

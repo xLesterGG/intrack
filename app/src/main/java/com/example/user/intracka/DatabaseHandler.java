@@ -31,9 +31,9 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         db.execSQL(CREATE_TABLE_SQL);
 
-        String SQL2 = "CREATE TABLE user_access_hist (rec_id TEXT PRIMARY KEY AUTO_INCREMENT,usr_id TEXT, login_date TEXT," +
+        String SQL2 = "CREATE TABLE user_access_hist (usr_id TEXT PRIMARY KEY, login_date TEXT," +
                 "login_time TEXT,login_loc TEXT, logout_date TEXT,logout_time TEXT,logout_loc TEXT,device_imei_num TEXT" +
-                "duration TEXT)";
+                ",duration TEXT)";
 
         db.execSQL(SQL2);
 
@@ -124,26 +124,50 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return cnt;
     }
 
-//    public List<User> getAllUser(){
-//        List<User>userList = new ArrayList<User>();
-//        SQLiteDatabase db = this.getWritableDatabase();
-//
-//        Cursor cursor = db.rawQuery("SELECT * from " + TABLE_NAME,null);
-//
-//        if (cursor.moveToFirst()){
-//            do{
-//                User user = new User();
-//                user.setUsr_id(cursor.getString(0));
-//                user.setSite_id(cursor.getString(1));
-//                user.setUsername(cursor.getString(2));
-//                user.setPassword(cursor.getString(3));
-//
-//                userList.add(user);
-//            }while (cursor.moveToNext());
-//
-//            return userList;
-//        }
-//
-//        return null;
-//    }
+    public List<User> getAllUser(){
+        List<User>userList = new ArrayList<User>();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * from " + TABLE_NAME,null);
+
+        if (cursor.moveToFirst()){
+            do{
+                User user = new User();
+                user.setUsr_id(cursor.getString(0));
+                user.setSite_id(cursor.getString(1));
+                user.setUsername(cursor.getString(2));
+                user.setPassword(cursor.getString(3));
+
+                userList.add(user);
+            }while (cursor.moveToNext());
+
+            return userList;
+        }
+
+        return null;
+    }
+
+    public List<AccessHistory> getAllHist(){
+        List<AccessHistory>histList = new ArrayList<>();
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT * from user_access_hist",null);
+
+        if (cursor.moveToFirst()){
+            do{
+                AccessHistory ah = new AccessHistory();
+                ah.setUsr_id(cursor.getString(0));
+                ah.setLogin_date(cursor.getString(1));
+                ah.setLogin_time(cursor.getString(2));
+                ah.setLogin_loc(cursor.getString(3));
+                ah.setDevice_imei_num1(cursor.getString(cursor.getColumnIndex("device_imei_num")));
+
+                histList.add(ah);
+            }while (cursor.moveToNext());
+
+            return histList;
+        }
+
+        return null;
+    }
 }

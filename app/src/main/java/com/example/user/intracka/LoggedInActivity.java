@@ -18,6 +18,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -28,10 +29,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import im.delight.android.location.SimpleLocation;
+
 public class LoggedInActivity extends AppCompatActivity {
     TextView welcomemsg;
     Button logoutbtn;
     DatabaseHandler db;
+    SimpleLocation location;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +46,13 @@ public class LoggedInActivity extends AppCompatActivity {
         String username = getIntent().getStringExtra("username");
         String status = getIntent().getStringExtra("access");
         db = new DatabaseHandler(this);
+
+        location = new SimpleLocation(this);
+
+        if (!location.hasLocationEnabled()) {
+            // ask the user to enable location access
+            SimpleLocation.openSettings(this);
+        }
 
         welcomemsg= (TextView)findViewById(R.id.welcomemsg);
         logoutbtn = (Button)findViewById(R.id.logoutbtn);
@@ -101,8 +113,24 @@ public class LoggedInActivity extends AppCompatActivity {
 
         TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
 
+
         DateFormat t = new SimpleDateFormat("HH:mm:ss");
-//        AccessHistory ah = new AccessHistory(username,df.format(dateobj),t.format(dateobj),,String.valueOf(telephonyManager.getDeviceId()));
+
+        AccessHistory ah = new AccessHistory(db.getUser(username).getUsr_id(),df.format(dateobj),t.format(dateobj),String.valueOf(location.getLatitude()) +"," + String.valueOf(location.getLongitude()),String.valueOf(telephonyManager.getDeviceId()));
+
+        Log.d("abc",ah.getUsr_id());
+        Log.d("abc",ah.getLogin_date());
+        Log.d("abc",ah.getLogin_time());
+        Log.d("abc",ah.getLogin_loc());
+        Log.d("abc",ah.getDevice_imei_num1());
+
+        db.addHist(ah);
+        Gson gson = new Gson();
+        String aa = gson.toJson(db.getAllHist());
+        Log.d("aaaa",aa);
+
+
+        db.clearDb2();
 
 
     }
