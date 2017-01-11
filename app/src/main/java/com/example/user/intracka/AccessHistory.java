@@ -15,6 +15,8 @@ public class AccessHistory {
         this.login_time = login_time;
         this.login_loc = login_loc;
         this.device_imei_num1 = device_imei_num;
+//        this.logout_time = "aaaaaaaaaaaaaaaaaaaaaaaaa";
+//        this.logout_date = "aaaaaaaaaaaaaa";
     }
 
     public String getUsr_id() {

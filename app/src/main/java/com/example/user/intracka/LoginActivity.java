@@ -75,18 +75,24 @@ public class LoginActivity extends AppCompatActivity {
                 }
                 else{
                     int method =0;
+                    Boolean first=false;
+                    if(db.getUserCount()==0)
+                    {
+                        first = true;
+                    }
 
                     if(isNetworkAvailable())
                        method=1;
-                    else
+                    else{
                         method =2;
+                    }
 
                     Log.d("method",String.valueOf(method));
 
                     if(method==1) {
 //                        StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://10.0.2.2/intrack/login.php",
 
-                                StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://192.168.1.79/intrack/login.php",
+                                StringRequest stringRequest = new StringRequest(Request.Method.POST, "http://192.168.1.75/intrack/login.php",
                                         new Response.Listener<String>() {
                                             @Override
                                             public void onResponse(String response) {
@@ -102,7 +108,7 @@ public class LoginActivity extends AppCompatActivity {
 
 
                                                 } else {
-                                                    Toast.makeText(LoginActivity.this, response, Toast.LENGTH_LONG).show();
+                                                    Toast.makeText(LoginActivity.this, response+" Please try again", Toast.LENGTH_LONG).show();
 
                                                 }
                                             }
@@ -129,45 +135,58 @@ public class LoginActivity extends AppCompatActivity {
                         requestQueue.add(stringRequest);
                     }
                     else if(method==2){
-                        if(db.getUser(usernameV)!=null){
-                            User u = db.getUser(usernameV);
+                        if(first==true){
 
-                            String pw = u.getPassword();
-                            MCrypt mcrypt = new MCrypt();
-                            String dpw="";
-
-                            //Log.d("count",String.valueOf(db.getHistoryCount()));
-
-                            try{
-                                dpw = new String(mcrypt.decrypt(pw));
-
-                            }catch (Exception e){
-                                e.printStackTrace();
-                            }
-
-                            dpw = dpw.replaceAll("[^A-Za-z0-9]","");
-                            dpw = dpw.replaceAll("\\s","");
-
-                            Log.d("password",dpw);
-                            Log.d("password",String.valueOf(dpw.length()) +"  "+ passwordV);
-
-                            if(dpw.equalsIgnoreCase(passwordV) ){
-                                Toast.makeText(getApplicationContext(),"Password correct",Toast.LENGTH_LONG).show();
-
-                                Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
-                                intent.putExtra("username", u.getUsername());
-                                intent.putExtra("access","offline");
-                                startActivity(intent);
-                            }
-                            else
+                            if(isNetworkAvailable())
                             {
-                                Toast.makeText(getApplicationContext(),"Password wrong",Toast.LENGTH_LONG).show();
+                                method=1;
                             }
-
+                            else{
+                                Toast.makeText(getApplicationContext(),"Please ensure you are connected to the internet as you are a first time user",Toast.LENGTH_LONG).show();
+                            }
 
                         }
-                        else{
-                            Toast.makeText(getApplicationContext(),"No such username",Toast.LENGTH_LONG).show();
+                        else {
+                            if(db.getUser(usernameV)!=null){
+                                User u = db.getUser(usernameV);
+
+                                String pw = u.getPassword();
+                                MCrypt mcrypt = new MCrypt();
+                                String dpw="";
+
+                                //Log.d("count",String.valueOf(db.getHistoryCount()));
+
+                                try{
+                                    dpw = new String(mcrypt.decrypt(pw));
+
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                }
+
+                                dpw = dpw.replaceAll("[^A-Za-z0-9]","");
+                                dpw = dpw.replaceAll("\\s","");
+
+                                Log.d("password",dpw);
+                                Log.d("password",String.valueOf(dpw.length()) +"  "+ passwordV);
+
+                                if(dpw.equalsIgnoreCase(passwordV) ){
+                                    Toast.makeText(getApplicationContext(),"Password correct",Toast.LENGTH_LONG).show();
+
+                                    Intent intent = new Intent(getBaseContext(), LoggedInActivity.class);
+                                    intent.putExtra("username", u.getUsername());
+                                    intent.putExtra("access","offline");
+                                    startActivity(intent);
+                                }
+                                else
+                                {
+                                    Toast.makeText(getApplicationContext(),"Password wrong",Toast.LENGTH_LONG).show();
+                                }
+
+
+                            }
+                            else{
+                                Toast.makeText(getApplicationContext(),"No such username, please ensure that you are connected to the internet if you are a new user",Toast.LENGTH_LONG).show();
+                            }
                         }
                     }
 

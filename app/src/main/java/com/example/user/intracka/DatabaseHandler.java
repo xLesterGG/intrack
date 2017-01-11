@@ -5,9 +5,15 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Exchanger;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by user on 1/4/2017.
@@ -31,7 +37,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
         db.execSQL(CREATE_TABLE_SQL);
 
-        String SQL2 = "CREATE TABLE user_access_hist (usr_id TEXT PRIMARY KEY, login_date TEXT," +
+        String SQL2 = "CREATE TABLE user_access_hist (usr_id TEXT, login_date TEXT," +
                 "login_time TEXT,login_loc TEXT, logout_date TEXT,logout_time TEXT,logout_loc TEXT,device_imei_num TEXT" +
                 ",duration TEXT)";
 
@@ -41,7 +47,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS" + TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         db.execSQL("DROP TABLE IF EXISTS user_access_hist");
 
         onCreate(db);
@@ -56,6 +62,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         content.put("username",user.getUsername());
         content.put("password",user.getPassword());
 
+
         db.insert(TABLE_NAME, null,content);
         db.close();
     }
@@ -68,12 +75,18 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         content.put("login_date",ah.getLogin_date());
         content.put("login_time",ah.getLogin_time());
         content.put("login_loc",ah.getLogin_loc());
+
+        content.put("logout_date","");
+        content.put("logout_time","");
+        content.put("logout_loc","");
+
         content.put("device_imei_num",ah.getDevice_imei_num1());
+
+        content.put("duration","");
 
         db.insert("user_access_hist",null,content);
 
     }
-
 
     public void clearDb1()
     {
@@ -99,6 +112,8 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         if (cursor.moveToFirst()){
             cursor.moveToFirst();
             User user = new User((cursor.getString(0)),cursor.getString(1),username,cursor.getString(2));
+
+            //Log.d("deded",cursor.getString(0));
             return user;
         }
         return null;
@@ -160,7 +175,14 @@ public class DatabaseHandler extends SQLiteOpenHelper{
                 ah.setLogin_date(cursor.getString(1));
                 ah.setLogin_time(cursor.getString(2));
                 ah.setLogin_loc(cursor.getString(3));
+
+                ah.setLogout_date(cursor.getString(cursor.getColumnIndex("logout_date")));
+                ah.setLogout_time(cursor.getString(cursor.getColumnIndex("logout_time")));
+                ah.setLogout_loc(cursor.getString(cursor.getColumnIndex("logout_loc")));
+
+                ah.setDuration(cursor.getString(cursor.getColumnIndex("duration")));
                 ah.setDevice_imei_num1(cursor.getString(cursor.getColumnIndex("device_imei_num")));
+
 
                 histList.add(ah);
             }while (cursor.moveToNext());
@@ -169,5 +191,88 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         }
 
         return null;
+    }
+
+
+    public void updateHist(String loc,String duration){
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        Date dateobj = new Date();
+        DateFormat t = new SimpleDateFormat("HH:mm:ss");
+
+        ContentValues cv = new ContentValues();
+
+        cv.put("logout_date",df.format(dateobj));
+        cv.put("logout_time",t.format(dateobj));
+        cv.put("logout_loc",loc);
+        cv.put("duration",duration);
+
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery("SELECT rowid FROM user_access_hist",null);
+        if(cursor.moveToNext())
+            cursor.moveToLast();
+        Log.d("cursor",cursor.getString(0));
+        db.update("user_access_hist",cv,"rowid="+cursor.getString(0),null);
+
+//        String query  = String.format("UPDATE user_access_hist SET logout_date=" + df.format(dateobj) + "logout_time=" + t, (dateobj) + "logout_loc=" + loc + "duration =" + duration + "WHERE rec_id = (SELECT MAX(rec_id) FROM user_access_hist)" );
+
+    }
+
+    public String getDuration(){
+        String time[] = new String[2];
+        Date dateobj = new Date();
+        DateFormat t = new SimpleDateFormat("HH:mm:ss");
+
+        time[0] = t.format(dateobj);
+
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        Cursor cursor = db.rawQuery("SELECT rowid FROM user_access_hist",null);
+        if(cursor.moveToNext())
+            cursor.moveToLast();
+
+        Cursor cursor1 = db.rawQuery("SELECT login_time from user_access_hist where rowid=" +  cursor.getString(0),null);
+        if(cursor1.moveToNext())
+            cursor1.moveToLast();
+
+        Log.d("c",time[0]);
+
+        time[1] = cursor1.getString(0);
+
+        Log.d("c1",time[1]);
+
+
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+
+        try{
+            Date d1 = format.parse(time[0]);
+            Date d2 = format.parse(time[1]);
+            long seconds = (d1.getTime() - d2.getTime())/1000;
+
+            Log.d("diff",String.valueOf(seconds));
+
+            long s = seconds % 60;
+            long m = (seconds / 60) % 60;
+            long h = (seconds / (60 * 60)) % 24;
+
+//            Log.d("asdf",String.format("%d:%02d:%02d", h,m,s));
+            return String.format("%d:%02d:%02d", h,m,s);
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    public void deleteFirstRow(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery("SELECT rowid FROM user_access_hist",null);
+        if(cursor.moveToNext())
+            cursor.moveToFirst();
+
+//        Cursor c = db.rawQuery("DELETE FROM user_access_hist where rowid="+cursor.getString(0),null);
+        db.execSQL("DELETE FROM user_access_hist where rowid="+cursor.getString(0));
+        db.close();
     }
 }
